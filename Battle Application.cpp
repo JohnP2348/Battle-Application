@@ -2,8 +2,9 @@
 // Below is the corrected code with proper closing braces added.  
 
 #include <iostream>  
-#include <string>  
-#include <vector>  
+#include <string>  // includes the ability to make a string for the commands and options
+#include <vector>  // includes the ability to make a container for the party members
+#include "PartyMember.h"  // Include the header file for PartyMember
 using namespace std;  
 
 

@@ -10,5 +10,4 @@ struct Ability {
 	int cost;
 };
 extern std::vector<Ability> abilities;
-extern std::vector<Ability> enemyAbilities;
-extern std::vector<Ability> classAbilities;
+

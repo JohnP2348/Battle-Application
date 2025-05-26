@@ -10,3 +10,11 @@ std::vector<CharacterClass> classList = {
 		{4, "Cleric", 12, 15, 2, 4, 3, {{1, 1}, {2, 6}, {3, 11}}},
 		{5, "Paladin", 18, 5, 6, 6, 1, {{1, 1}, {2, 7}, {3, 12}}}
 		};
+CharacterClass CharacterClass::getClassByID(int id) {
+	for (const auto& c : classList) {
+		if (c.id == id) {
+			return c;
+		}
+	}
+	return { 0, "unknown", 0, 0, 0, 0, 0, {} };
+}

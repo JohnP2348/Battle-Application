@@ -10,6 +10,7 @@ struct CharacterClass {
 	int strengthModifier;
 	int defenseModifier;
 	int speedModifier;
+	static CharacterClass getClassByID(int id);
 	// Abilities unlocked at certain class levels paired with their level
 	std::vector<std::pair<int, int>> abilitiesByLevel;
 };
