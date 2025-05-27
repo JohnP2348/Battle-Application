@@ -1,10 +1,11 @@
 // The issue is caused by an unclosed '{' in the code. The main function and some blocks are not properly closed.  
 // Below is the corrected code with proper closing braces added.  
-
-#include <iostream>  
+#include "Enemies.h" // Include the header file for Enemies
+#include <iostream>  // includes the ability to make input and output to the console
 #include <string>  // includes the ability to make a string for the commands and options
 #include <vector>  // includes the ability to make a container for the party members
 #include "PartyMember.h"  // Include the header file for PartyMember
+#include <random> // includes the ability to spawn random enemies and make random choices for enemies.
 using namespace std;  
 
 
@@ -16,17 +17,17 @@ int main()
    string Run = "2. Flee \n";  
    string status = "3. Status \n";  
 
-   int FightChoice;  
-   cout << "Battle";  
-   cout << "Pick a command: \n";  
+   int FightChoice;  // variable to store the player's choice of action in battle
+   cout << "Battle \n";  // display the title of the battle
+   cout << "Pick a command: \n";  // display the options for the player to choose from
    cout << Fight;  
    cout << Run;  
    cout << status;  
-   cin >> FightChoice;  
+   cin >> FightChoice;  // get the player's choice of action in battle
 
    if (FightChoice == 1)  
    {  
-       cout << "You have chosen to fight!";  
+       cout << "You have chosen to fight! \n";  
 
        // define the commands and sub menus  
        vector<string> commands = { "Attack", "Ability", "Magic", "Item", "Defend" };  
@@ -36,7 +37,7 @@ int main()
        for (size_t i = 0; i < party.size(); i++)  
        {  
            cout << party[i].name << "'s turn!\n";  
-           cout << "choose an action!";  
+           cout << "choose an action! \n";  
 
            // display the commands  
            for (size_t j = 0; j < commands.size(); j++)  
@@ -44,7 +45,7 @@ int main()
                cout << j + 1 << ": " << commands[j] << "\n";  
            }  
            int choice;  
-           cout << "Enter your choice: ";  
+           cout << "Enter your choice: \n";  
            cin >> choice;  
            if (choice >= 1 && choice <= commands.size())  
            {  
@@ -67,7 +68,7 @@ int main()
            return 0;  
        }  
        else {  
-           cout << "Escape failed! The enemy attacks!";  
+           cout << "Escape failed! \n The enemy attacks! \n";  
        }  
    }  
    else if (FightChoice == 3)  
