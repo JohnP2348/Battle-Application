@@ -130,6 +130,8 @@
     <ClCompile Include="Ability.cpp" />
     <ClCompile Include="Battle Application.cpp" />
     <ClCompile Include="Enemies.cpp" />
+    <ClCompile Include="Items.cpp" />
+    <ClCompile Include="Magic.cpp" />
     <ClCompile Include="PartyMember.cpp" />
     <ClCompile Include="CharacterClass.cpp" />
   </ItemGroup>
@@ -137,6 +139,8 @@
     <ClInclude Include="Enemies.h" />
     <ClInclude Include="Ability.h" />
     <ClInclude Include="CharacterClass.h" />
+    <ClInclude Include="Items.h" />
+    <ClInclude Include="Magic.h" />
     <ClInclude Include="PartyMember.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
