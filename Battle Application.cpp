@@ -6,13 +6,38 @@
 #include <vector>  // includes the ability to make a container for the party members
 #include "PartyMember.h"  // Include the header file for PartyMember
 #include <random> // includes the ability to spawn random enemies and make random choices for enemies.
+#include <algorithm> // includes the ability to sort the party members by speed for turn order 
 using namespace std;  
+// to spawn 1-4 enemies with rarity logic
+vector<RegularEnemy> SpawnEnemyParty() {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> partySizeDist(1, 100);
+    int roll = partySizeDist(gen);  // Generate a random number between 1 and 100
+    int numEnemies;
+    if (roll <= 40) numEnemies = 2;  // 40% chance to spawn 1 enemy
+    else if (roll <= 70) numEnemies = 1;  // 30% chance to spawn 2 enemies
+    else if (roll <= 90) numEnemies = 3;  // 20% chance to spawn 3 enemies
+    else numEnemies = 4;  // 10% chance to spawn 4 enemies
 
+    vector<RegularEnemy> enemies;
+    uniform_int_distribution<> enemyDist(0, regularEnemies.size() - 1); // Generate a random enemy from the regularEnemies vector
+    for (int i = 0; i < numEnemies; i++) // for loop
+    {
+        enemies.push_back(regularEnemies[enemyDist(gen)]); // Add a random enemy to the enemies vector
+    }
+    return enemies;
+}// Return the vector of enemies
 
 int main()  
 {  
-   
 
+	vector<RegularEnemy> enemies = SpawnEnemyParty();  // Call the function to spawn a party of enemies
+    for (size_t i = 0; i < enemies.size(); i++)
+    {
+		cout << enemies[i].name;  // Display the name of each enemy in the party
+        cout << "\n appeared! \n";  // Display the number of enemies spawned
+    }
    string Fight = "1. Fight \n";  
    string Run = "2. Flee \n";  
    string status = "3. Status \n";  
@@ -73,7 +98,7 @@ int main()
    }  
    else if (FightChoice == 3)  
    {  
-       cout << "Party Status";  
+       cout << "Party Status \n";  
        for (size_t i = 0; i < party.size(); i++)  
        {  
            cout << party[i].name << " Health: " << party[i].health << "/" << party[i].maxHealth << "\n";  

@@ -136,6 +136,7 @@
     <ClCompile Include="CharacterClass.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BattleApplication.h" />
     <ClInclude Include="Enemies.h" />
     <ClInclude Include="Ability.h" />
     <ClInclude Include="CharacterClass.h" />

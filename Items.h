@@ -14,4 +14,4 @@ struct Item {
 	int power;// for consumables, this could be health restored or damage done
 	std::string effect;
 };
-extern std::vector<std::string> items;
+extern std::vector<std::string> Items;
