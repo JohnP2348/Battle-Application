@@ -36,7 +36,7 @@ int main()
     for (size_t i = 0; i < enemies.size(); i++)
     {
 		cout << enemies[i].name;  // Display the name of each enemy in the party
-        cout << "\n appeared! \n";  // Display the number of enemies spawned
+        cout << " appeared! \n";  // Display the number of enemies spawned
     }
    string Fight = "1. Fight \n";  
    string Run = "2. Flee \n";  
@@ -103,7 +103,7 @@ int main()
        {  
            cout << party[i].name << " Health: " << party[i].health << "/" << party[i].maxHealth << "\n";  
            cout << party[i].name << " Mana: " << party[i].mana << "/" << party[i].maxMana << "\n";  
-           cout << party[i].name << " Level: " << party[i].level << "\n";  
+           cout << party[i].name << " Level: " << party[i].level << "\n"; 
            cout << party[i].name << " Experience: " << party[i].experience << "\n";  
        }  
    }  
