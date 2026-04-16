@@ -36,6 +36,9 @@
     <ClCompile Include="Items.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="DisplayUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Enemies.h">
@@ -57,6 +60,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BattleApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayUI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
