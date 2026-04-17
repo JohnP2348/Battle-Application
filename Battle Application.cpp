@@ -1,116 +1,115 @@
-#include "Enemies.h" // Include the header file for Enemies
-#include <iostream>  // includes the ability to make input and output to the console
-#include <string>  // includes the ability to make a string for the commands and options
-#include <vector>  // includes the ability to make a container for the party members
-#include "PartyMember.h"  // Include the header file for PartyMember
-#include <random> // includes the ability to spawn random enemies and make random choices for enemies.
-#include <algorithm> // includes the ability to sort the party members by speed for turn order 
-#include "DisplayUI.h"  // Add this at the top with your other includes
-using namespace std;  
+#include <iostream>
+#include <string>
+#include <vector>
+#include "PartyMember.h"
+#include "Enemies.h"
+#include <random>
+#include <algorithm>
+#include "DisplayUI.h"
+using namespace std;
 
-// to spawn 1-4 enemies with rarity logic
 vector<RegularEnemy> SpawnEnemyParty() {
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> partySizeDist(1, 100);
-    int roll = partySizeDist(gen);  // Generate a random number between 1 and 100
+    int roll = partySizeDist(gen);
     int numEnemies;
-    if (roll <= 40) numEnemies = 2;  // 40% chance to spawn 2 enemies
-    else if (roll <= 70) numEnemies = 1;  // 30% chance to spawn 1 enemy
-    else if (roll <= 90) numEnemies = 3;  // 20% chance to spawn 3 enemies
-    else numEnemies = 4;  // 10% chance to spawn 4 enemies
+    if (roll <= 40) numEnemies = 2;
+    else if (roll <= 70) numEnemies = 1;
+    else if (roll <= 90) numEnemies = 3;
+    else numEnemies = 4;
 
     vector<RegularEnemy> enemies;
-    // FIX: Cast size() to int to avoid C4267
     uniform_int_distribution<> enemyDist(0, static_cast<int>(regularEnemies.size()) - 1);
-    for (int i = 0; i < numEnemies; i++) // for loop
-    {
-        enemies.push_back(regularEnemies[enemyDist(gen)]); // Add a random enemy to the enemies vector
+    for (int i = 0; i < numEnemies; i++) {
+        enemies.push_back(regularEnemies[enemyDist(gen)]);
     }
     return enemies;
 }
 
-int main()  
-{  
-    vector<RegularEnemy> enemies = SpawnEnemyParty();  // Call the function to spawn a party of enemies
-    for (size_t i = 0; i < enemies.size(); i++)
-    {
-        cout << enemies[i].name;  // Display the name of each enemy in the party
-        cout << " appeared! \n";  // Display the number of enemies spawned
+int main() {
+    vector<RegularEnemy> enemies = SpawnEnemyParty();
+    
+    cout << "Battle started!\n";
+    for (size_t i = 0; i < enemies.size(); i++) {
+        cout << enemies[i].name << " appeared!\n";
+    }
+    cout << "\n";
+    
+    // Main battle menu with selector - now shows party and enemies
+    vector<string> battleMenu = { "Fight", "Flee", "Status" };
+    int battleChoice = DisplayMenuSelector(battleMenu, party, enemies, "=== BATTLE ===");
+    
+    if (battleChoice == 0) {  // Fight
+        cout << "You have chosen to fight!\n";
+        
+        vector<string> commands = { "Attack", "Ability", "Magic", "Item", "Defend" };
+        vector<int> chosenCommands(party.size());
+        vector<int> chosenTargets(party.size(), -1);  // Store target for each party member
+        
+        for (size_t i = 0; i < party.size(); i++) {
+            bool actionSelected = false;
+            
+            while (!actionSelected) {
+                int choice = DisplayMenuSelector(commands, party, enemies,
+                                                  party[i].name + "'s turn - Choose an action:");
+                chosenCommands[i] = choice;
+                
+                // If they chose Attack, have them select a target
+                if (choice == 0) {  // Attack
+                    int targetIndex = DisplayEnemyTargetSelector(enemies, party, party[i].name);
+                    chosenTargets[i] = targetIndex;
+                    
+                    system("cls");
+                    cout << party[i].name << " will attack " << enemies[targetIndex].name << "!\n";
+                    cout << "Press ENTER to continue...\n";
+                    cin.get();
+                    
+                    actionSelected = true;
+                }
+                else {
+                    // For other actions, just confirm the choice
+                    system("cls");
+                    cout << party[i].name << " will use " << commands[choice] << "!\n";
+                    cout << "Press ENTER to continue...\n";
+                    cin.get();
+                    
+                    actionSelected = true;
+                }
+            }
+        }
+        
+        // Battle round summary
+        system("cls");
+        cout << "=== BATTLE ROUND SUMMARY ===\n\n";
+        for (size_t i = 0; i < party.size(); i++) {
+            cout << party[i].name << " will use: " << commands[chosenCommands[i]];
+            if (chosenCommands[i] == 0 && chosenTargets[i] != -1) {
+                cout << " on " << enemies[chosenTargets[i]].name;
+            }
+            cout << "\n";
+        }
+        cout << "\nPress ENTER to begin the round...\n";
+        cin.get();
+    }
+    else if (battleChoice == 1) {  // Flee
+        cout << "Party attempts to escape!\n";
+        bool escapeSuccess = false;
+        
+        if (escapeSuccess == true) {
+            return 0;
+        }
+        else {
+            cout << "Escape failed! The enemy attacks!\n";
+        }
+    }
+    else if (battleChoice == 2) {  // Status
+        system("cls");
+        DisplayPartyBars(party);
+        DisplayEnemyBars(enemies);
+        cout << "\nPress ENTER to return to battle...\n";
+        cin.get();
     }
     
-    string Fight = "1. Fight \n";  
-    string Run = "2. Flee \n";  
-    string status = "3. Status \n";  
-
-    int FightChoice;  // variable to store the player's choice of action in battle
-    cout << "Battle \n";  // display the title of the battle
-    cout << "Pick a command: \n";  // display the options for the player to choose from
-    cout << Fight;  
-    cout << Run;  
-    cout << status;  
-    cin >> FightChoice;  // get the player's choice of action in battle
-
-    if (FightChoice == 1)  
-    {  
-        cout << "You have chosen to fight! \n";  
-        // Display party status before battle starts
-        DisplayPartyBars(party);  // Show current status before choices
-        
-        // define the commands and sub menus  
-        vector<string> commands = { "Attack", "Ability", "Magic", "Item", "Defend" };  
-        // store each command picked by the player for the corresponding character  
-        vector<int> chosenCommands(party.size());  
-        // iterate through the party members and ask for their command  
-        for (size_t i = 0; i < party.size(); i++)  
-        {  
-            cout << party[i].name << "'s turn!\n";  
-            cout << "choose an action! \n";  
-
-            // display the commands  
-            for (size_t j = 0; j < commands.size(); j++)  
-            {  
-                cout << j + 1 << ": " << commands[j] << "\n";  
-            }  
-            int choice;  
-            cout << "Enter your choice: \n";  
-            cin >> choice;  
-            // FIX: Cast commands.size() to int for comparison
-            if (choice >= 1 && choice <= static_cast<int>(commands.size()))  
-            {  
-                chosenCommands[i] = choice - 1;  
-                cout << party[i].name << " Gets ready!\n";  
-            }  
-            else {  
-                cout << "Pick a valid command!\n";  
-                i--;  
-            }  
-        }  
-    }  
-    else if (FightChoice == 2)  
-    {  
-        cout << "Party attempts to escape!";  
-        bool escapeSuccess = false;  
-        // Add escape logic here  
-        // For example, you could check if the party has a high enough speed to escape  
-        if (escapeSuccess == true) {  
-            return 0;  
-        }  
-        else {  
-            cout << "Escape failed! \n The enemy attacks! \n";  
-        }  
-    }  
-    else if (FightChoice == 3)  
-    {  
-        cout << "Party Status \n";  
-        for (size_t i = 0; i < party.size(); i++)  
-        {  
-            cout << party[i].name << " Health: " << party[i].health << "/" << party[i].maxHealth << "\n";  
-            cout << party[i].name << " Mana: " << party[i].mana << "/" << party[i].maxMana << "\n";  
-            cout << party[i].name << " Level: " << party[i].level << "\n"; 
-            cout << party[i].name << " Experience: " << party[i].experience << "\n";  
-        }  
-    }  
-
-    return 0;  
+    return 0;
 }
