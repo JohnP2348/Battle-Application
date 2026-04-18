@@ -1,11 +1,12 @@
 #pragma once
 #include <vector>
-#include <string>
 #include "PartyMember.h"
+#include "Enemies.h"
 
+// Forward declarations
+extern std::vector<PartyMember> party;
+extern std::vector<RegularEnemy> enemies;
 
-void RunBattleMenu();
-
-void HandleFight(std::vector<PartyMember>& party);
-void HandleFlee(std::vector<PartyMember>& party);
-void ShowPartyStatus(const std::vector<PartyMember>& party);
+// Game initialization and main loop
+void InitializeGame();
+void RunGameLoop();

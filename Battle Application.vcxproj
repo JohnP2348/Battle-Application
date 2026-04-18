@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="Ability.cpp" />
     <ClCompile Include="Battle Application.cpp" />
+    <ClCompile Include="BattleHandler.cpp" />
     <ClCompile Include="DisplayUI.cpp" />
     <ClCompile Include="Enemies.cpp" />
     <ClCompile Include="Items.cpp" />
@@ -138,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BattleApplication.h" />
+    <ClInclude Include="BattleHandler.h" />
     <ClInclude Include="DisplayUI.h" />
     <ClInclude Include="Enemies.h" />
     <ClInclude Include="Ability.h" />

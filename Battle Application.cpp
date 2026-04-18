@@ -3,9 +3,10 @@
 #include <vector>
 #include "PartyMember.h"
 #include "Enemies.h"
-#include <random>
-#include <algorithm>
+#include "BattleHandler.h"
 #include "DisplayUI.h"
+#include <random>
+
 using namespace std;
 
 vector<RegularEnemy> SpawnEnemyParty() {
@@ -29,78 +30,28 @@ vector<RegularEnemy> SpawnEnemyParty() {
 
 int main() {
     vector<RegularEnemy> enemies = SpawnEnemyParty();
-    
-    cout << "Battle started!\n";
-    for (size_t i = 0; i < enemies.size(); i++) {
-        cout << enemies[i].name << " appeared!\n";
-    }
-    cout << "\n";
-    
-    // Main battle menu with selector - now shows party and enemies
+
+    // Main battle menu
     vector<string> battleMenu = { "Fight", "Flee", "Status" };
     int battleChoice = DisplayMenuSelector(battleMenu, party, enemies, "=== BATTLE ===");
-    
+
     if (battleChoice == 0) {  // Fight
-        cout << "You have chosen to fight!\n";
-        
-        vector<string> commands = { "Attack", "Ability", "Magic", "Item", "Defend" };
-        vector<int> chosenCommands(party.size());
-        vector<int> chosenTargets(party.size(), -1);  // Store target for each party member
-        
-        for (size_t i = 0; i < party.size(); i++) {
-            bool actionSelected = false;
-            
-            while (!actionSelected) {
-                int choice = DisplayMenuSelector(commands, party, enemies,
-                                                  party[i].name + "'s turn - Choose an action:");
-                chosenCommands[i] = choice;
-                
-                // If they chose Attack, have them select a target
-                if (choice == 0) {  // Attack
-                    int targetIndex = DisplayEnemyTargetSelector(enemies, party, party[i].name);
-                    chosenTargets[i] = targetIndex;
-                    
-                    system("cls");
-                    cout << party[i].name << " will attack " << enemies[targetIndex].name << "!\n";
-                    cout << "Press ENTER to continue...\n";
-                    cin.get();
-                    
-                    actionSelected = true;
-                }
-                else {
-                    // For other actions, just confirm the choice
-                    system("cls");
-                    cout << party[i].name << " will use " << commands[choice] << "!\n";
-                    cout << "Press ENTER to continue...\n";
-                    cin.get();
-                    
-                    actionSelected = true;
-                }
-            }
-        }
-        
-        // Battle round summary
-        system("cls");
-        cout << "=== BATTLE ROUND SUMMARY ===\n\n";
-        for (size_t i = 0; i < party.size(); i++) {
-            cout << party[i].name << " will use: " << commands[chosenCommands[i]];
-            if (chosenCommands[i] == 0 && chosenTargets[i] != -1) {
-                cout << " on " << enemies[chosenTargets[i]].name;
-            }
-            cout << "\n";
-        }
-        cout << "\nPress ENTER to begin the round...\n";
-        cin.get();
+        // Create battle handler and run the battle
+        BattleHandler battleHandler(party, enemies);
+        battleHandler.RunBattle();
     }
     else if (battleChoice == 1) {  // Flee
         cout << "Party attempts to escape!\n";
         bool escapeSuccess = false;
-        
+
         if (escapeSuccess == true) {
+            cout << "Successfully fled from battle!\n";
             return 0;
         }
         else {
             cout << "Escape failed! The enemy attacks!\n";
+            BattleHandler battleHandler(party, enemies);
+            battleHandler.RunBattle();
         }
     }
     else if (battleChoice == 2) {  // Status
@@ -110,6 +61,6 @@ int main() {
         cout << "\nPress ENTER to return to battle...\n";
         cin.get();
     }
-    
+
     return 0;
 }
