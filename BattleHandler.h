@@ -7,8 +7,9 @@
 struct BattleAction {
     int actorIndex;          // Index of who's performing the action
     int actionType;          // 0=Attack, 1=Ability, 2=Magic, 3=Item, 4=Defend
-    int targetIndex;         // Index of the target
+    int targetIndex;         // Index of the target (-1 for defend)
     std::string actionName;
+    bool isDefending;        // Track if character is defending
 };
 
 struct BattleTurn {
@@ -21,9 +22,13 @@ private:
     std::vector<PartyMember>& party;
     std::vector<RegularEnemy>& enemies;
     std::vector<BattleAction> turnActions;
+    std::vector<bool> partyDefending;  // Track who's defending
+    std::vector<bool> enemiesDefending;  // Track which enemies are defending
 
-    // Private helper method
-    void ExecuteAttack(const BattleAction& action);
+    // Private helper methods
+    void ExecuteAction(const BattleAction& action);
+    void ApplyDamage(int& targetHealth, int maxHealth, int damage, bool isDefending);
+    bool IsValidTarget(int targetIndex);
 
 public:
     // Constructor
@@ -35,8 +40,8 @@ public:
     // Get enemy AI actions
     void GetEnemyActions();
 
-    // Execute all actions for the current turn
-    void ExecuteTurn();
+    // Execute a single round of combat (get actions and resolve them)
+    void ExecuteRound();
 
     // Check if battle is over
     bool IsBattleOver() const;
@@ -49,7 +54,7 @@ public:
 
     // Display battle state
     void DisplayBattleState() const;
-
-    // Run full battle loop
-    void RunBattle();
+    
+    // Get list of alive enemies for targeting
+    std::vector<int> GetAliveEnemyIndices() const;
 };
