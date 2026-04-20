@@ -90,7 +90,47 @@ int main() {
                 cout << "Escape failed! The enemy blocks your path!\n";
                 cout << "Press ENTER to continue...\n";
                 cin.get();
-                // Battle continues, loop back to menu
+                
+                // ENEMY COUNTER-ATTACK after failed escape
+                // Only enemies attack, not party
+                cout << "\nThe enemy counter-attacks!\n";
+                cout << "Press ENTER to continue...\n";
+                cin.get();
+                
+                battleHandler.GetEnemyActions();
+                
+                // Display enemy attack summary
+                system("cls");
+                cout << "=== ENEMY COUNTER-ATTACK ===\n\n";
+                cout << "The enemies are attacking!\n";
+                cout << "\nPress ENTER to execute...\n";
+                cin.get();
+
+                // Execute only the enemy actions (not a full round)
+                system("cls");
+                DisplayBattleField(party, enemies);
+                cout << "=== COUNTER-ATTACK ===\n";
+                cout << "\nPress ENTER to see the attacks...\n";
+                cin.get();
+                
+                // Execute enemy attacks by calling a helper that processes just enemy actions
+                battleHandler.ExecuteEnemyAttacks();
+                
+                // Check if battle is over
+                if (battleHandler.IsBattleOver()) {
+                    system("cls");
+                    if (battleHandler.HasPlayerWon()) {
+                        cout << "=== VICTORY! ===\n";
+                        cout << "You defeated all enemies!\n";
+                    }
+                    else {
+                        cout << "=== DEFEAT! ===\n";
+                        cout << "Your party was defeated!\n";
+                    }
+                    cout << "Press ENTER to continue...\n";
+                    cin.get();
+                    battleInProgress = false;
+                }
             }
         }
         else if (battleChoice == 2) {  // Status
@@ -116,7 +156,7 @@ int main() {
                     cout << "Speed: " << enemies[i].speed << "\n";
                 }
                 else {
-                    cout << "\n[" << i + 1 << "] " << enemies[i].name << " - DEFEATED\n";
+                    cout << "\n[" << i + 1 << "] " << enemies[i].name << " - DOWNED\n";
                 }
             }
             

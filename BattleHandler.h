@@ -43,6 +43,9 @@ public:
     // Execute a single round of combat (get actions and resolve them)
     void ExecuteRound();
 
+    // Execute only enemy attacks (for counter-attacks when escape fails)
+    void ExecuteEnemyAttacks();
+
     // Check if battle is over
     bool IsBattleOver() const;
 

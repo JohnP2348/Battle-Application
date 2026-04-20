@@ -11,40 +11,55 @@ void ResetConsoleColor() {
 }
 
 std::string CreateHPBar(int current, int max, int barWidth) {
-    if (max <= 0) return std::string(barWidth, '-');
+    if (max <= 0) return std::string(barWidth, '_');
     
-    int filledWidth = static_cast<int>((static_cast<double>(current) / max) * barWidth);
-    filledWidth = (filledWidth < 0) ? 0 : (filledWidth > barWidth) ? barWidth : filledWidth;
+    // Calculate percentage of HP remaining (0.0 to 1.0)
+    double percentage = static_cast<double>(current) / static_cast<double>(max);
+    
+    // Each 10% = 1 "=", so 10 "=" max for 100%
+    // If bar width is 10, then: 100% = 10 "=", 90% = 9 "=", etc.
+    int filledBars = static_cast<int>(percentage * barWidth);
+    filledBars = (filledBars < 0) ? 0 : (filledBars > barWidth) ? barWidth : filledBars;
     
     std::string bar = "[";
     
+    // Add filled bars (blue for healthy)
     SetConsoleColor(BLUE);
-    bar += std::string(filledWidth, '=');
-    
-    SetConsoleColor(RED);
-    bar += std::string(barWidth - filledWidth, '=');
-    
+    for (int i = 0; i < filledBars; i++) {
+        bar += '=';
+    }
     ResetConsoleColor();
+    
+    // Add empty bars (underscores)
+    for (int i = filledBars; i < barWidth; i++) {
+        bar += '_';
+    }
+    
     bar += "]";
     
     return bar;
 }
 
 std::string CreateManaBar(int current, int max, int barWidth) {
-    if (max <= 0) return std::string(barWidth, '-');
+    if (max <= 0) return std::string(barWidth, '_');
     
-    int filledWidth = static_cast<int>((static_cast<double>(current) / max) * barWidth);
-    filledWidth = (filledWidth < 0) ? 0 : (filledWidth > barWidth) ? barWidth : filledWidth;
+    // Calculate percentage of Mana remaining
+    double percentage = static_cast<double>(current) / static_cast<double>(max);
+    int filledBars = static_cast<int>(percentage * barWidth);
+    filledBars = (filledBars < 0) ? 0 : (filledBars > barWidth) ? barWidth : filledBars;
     
     std::string bar = "[";
     
     SetConsoleColor(GREEN);
-    bar += std::string(filledWidth, '=');
-    
-    SetConsoleColor(GRAY);
-    bar += std::string(barWidth - filledWidth, '=');
-    
+    for (int i = 0; i < filledBars; i++) {
+        bar += '=';
+    }
     ResetConsoleColor();
+    
+    for (int i = filledBars; i < barWidth; i++) {
+        bar += '_';
+    }
+    
     bar += "]";
     
     return bar;
@@ -52,17 +67,24 @@ std::string CreateManaBar(int current, int max, int barWidth) {
 
 void DisplayPartyBars(const std::vector<PartyMember>& party) {
     SetConsoleColor(YELLOW);
-    std::cout << "\n========== PARTY STATUS ==========\n";
+    std::cout << "========== PARTY STATUS ==========\n";
     ResetConsoleColor();
     
     for (const auto& member : party) {
-        std::cout << member.name << " (Lv " << member.level << ")\n";
-        
-        std::cout << "  HP:   " << member.health << "/" << member.maxHealth << " ";
-        std::cout << CreateHPBar(member.health, member.maxHealth) << "\n";
-        
-        std::cout << "  Mana: " << member.mana << "/" << member.maxMana << " ";
-        std::cout << CreateManaBar(member.mana, member.maxMana) << "\n";
+        if (member.health > 0) {
+            std::cout << member.name << " (Lv " << member.level << ")\n";
+            
+            std::cout << "  HP:   " << member.health << "/" << member.maxHealth << " ";
+            std::cout << CreateHPBar(member.health, member.maxHealth) << "\n";
+            
+            std::cout << "  Mana: " << member.mana << "/" << member.maxMana << " ";
+            std::cout << CreateManaBar(member.mana, member.maxMana) << "\n";
+        }
+        else {
+            SetConsoleColor(RED);
+            std::cout << member.name << " - DOWNED\n";
+            ResetConsoleColor();
+        }
     }
     
     SetConsoleColor(YELLOW);
@@ -77,9 +99,12 @@ void DisplayEnemyBars(const std::vector<RegularEnemy>& enemies) {
     ResetConsoleColor();
 
     for (size_t i = 0; i < enemies.size(); i++) {
-        std::cout << "[" << i + 1 << "] " << enemies[i].name << " (Lv " << enemies[i].level << ")\n";
-        std::cout << "     HP: " << enemies[i].health << "/" << enemies[i].maxHealth << " ";
-        std::cout << CreateHPBar(enemies[i].health, enemies[i].maxHealth) << "\n";
+        // Only display alive enemies
+        if (enemies[i].health > 0) {
+            std::cout << "[" << i + 1 << "] " << enemies[i].name << " (Lv " << enemies[i].level << ")\n";
+            std::cout << "     HP: " << enemies[i].health << "/" << enemies[i].maxHealth << " ";
+            std::cout << CreateHPBar(enemies[i].health, enemies[i].maxHealth) << "\n";
+        }
     }
     SetConsoleColor(RED);
     std::cout << "=============================\n";
@@ -95,20 +120,30 @@ void DisplayBattleField(const std::vector<PartyMember>& party,
     std::cout << "========== PARTY STATUS ==========\n";
     ResetConsoleColor();
     for (const auto& member : party) {
-        std::cout << member.name << " (Lv " << member.level << ")\n";
-        std::cout << "  HP:   " << member.health << "/" << member.maxHealth << "  ";
-        std::cout << CreateHPBar(member.health, member.maxHealth) << "\n";
-        std::cout << "  Mana: " << member.mana << "/" << member.maxMana << " ";
-        std::cout << CreateManaBar(member.mana, member.maxMana) << "\n";
+        if (member.health > 0) {
+            std::cout << member.name << " (Lv " << member.level << ")\n";
+            std::cout << "  HP:   " << member.health << "/" << member.maxHealth << "  ";
+            std::cout << CreateHPBar(member.health, member.maxHealth) << "\n";
+            std::cout << "  Mana: " << member.mana << "/" << member.maxMana << " ";
+            std::cout << CreateManaBar(member.mana, member.maxMana) << "\n";
+        }
+        else {
+            SetConsoleColor(RED);
+            std::cout << member.name << " - DOWNED\n";
+            ResetConsoleColor();
+        }
     }
     SetConsoleColor(RED);
     std::cout << "========== ENEMIES ==========\n";
     ResetConsoleColor();
 
     for (size_t i = 0; i < enemies.size(); i++) {
-        std::cout << "[" << i + 1 << "] " << enemies[i].name << " (Lv " << enemies[i].level << ")\n";
-        std::cout << "     HP: " << enemies[i].health << "/" << enemies[i].maxHealth << " ";
-        std::cout << CreateHPBar(enemies[i].health, enemies[i].maxHealth) << "\n";
+        // Only display alive enemies
+        if (enemies[i].health > 0) {
+            std::cout << "[" << i + 1 << "] " << enemies[i].name << " (Lv " << enemies[i].level << ")\n";
+            std::cout << "     HP: " << enemies[i].health << "/" << enemies[i].maxHealth << " ";
+            std::cout << CreateHPBar(enemies[i].health, enemies[i].maxHealth) << "\n";
+        }
     }
 
     std::cout << "\n";
@@ -177,10 +212,10 @@ int DisplayEnemyTargetSelector(const std::vector<RegularEnemy>& enemies,
                                const std::vector<PartyMember>& party,
                                const std::string& characterName) {
     if (enemies.empty()) return -1;
-
+    
     int selectedIndex = 0;
     bool selecting = true;
-
+    
     while (selecting) {
         system("cls");
 
@@ -191,17 +226,21 @@ int DisplayEnemyTargetSelector(const std::vector<RegularEnemy>& enemies,
         ResetConsoleColor();
         std::cout << "================================\n\n";
 
-        // Display enemies with selector
+        // Display only alive enemies with selector
+        int displayCount = 0;
         for (size_t i = 0; i < enemies.size(); i++) {
-            if (i == selectedIndex) {
-                SetConsoleColor(GREEN);
-                std::cout << " --> [" << i + 1 << "] " << enemies[i].name;
-                std::cout << " - HP: " << enemies[i].health << "/" << enemies[i].maxHealth << "\n";
-                ResetConsoleColor();
-            }
-            else {
-                std::cout << "     [" << i + 1 << "] " << enemies[i].name;
-                std::cout << " - HP: " << enemies[i].health << "/" << enemies[i].maxHealth << "\n";
+            if (enemies[i].health > 0) {  // Only show alive enemies
+                if (displayCount == selectedIndex) {
+                    SetConsoleColor(GREEN);
+                    std::cout << " --> [" << i + 1 << "] " << enemies[i].name;
+                    std::cout << " - HP: " << enemies[i].health << "/" << enemies[i].maxHealth << "\n";
+                    ResetConsoleColor();
+                }
+                else {
+                    std::cout << "     [" << i + 1 << "] " << enemies[i].name;
+                    std::cout << " - HP: " << enemies[i].health << "/" << enemies[i].maxHealth << "\n";
+                }
+                displayCount++;
             }
         }
 
@@ -215,11 +254,17 @@ int DisplayEnemyTargetSelector(const std::vector<RegularEnemy>& enemies,
         if (key == 224) {
             int arrowKey = _getch();
 
+            // Count alive enemies
+            int aliveCount = 0;
+            for (const auto& enemy : enemies) {
+                if (enemy.health > 0) aliveCount++;
+            }
+
             if (arrowKey == 72) {  // UP arrow
-                selectedIndex = (selectedIndex - 1 + static_cast<int>(enemies.size())) % static_cast<int>(enemies.size());
+                selectedIndex = (selectedIndex - 1 + aliveCount) % aliveCount;
             }
             else if (arrowKey == 80) {  // DOWN arrow
-                selectedIndex = (selectedIndex + 1) % static_cast<int>(enemies.size());
+                selectedIndex = (selectedIndex + 1) % aliveCount;
             }
         }
         else if (key == 13) {  // ENTER key
@@ -227,6 +272,17 @@ int DisplayEnemyTargetSelector(const std::vector<RegularEnemy>& enemies,
         }
     }
 
-    return selectedIndex;
+    // Convert display index back to actual enemy index
+    int displayCount = 0;
+    for (size_t i = 0; i < enemies.size(); i++) {
+        if (enemies[i].health > 0) {
+            if (displayCount == selectedIndex) {
+                return static_cast<int>(i);
+            }
+            displayCount++;
+        }
+    }
+
+    return 0;  // Fallback
 }
 

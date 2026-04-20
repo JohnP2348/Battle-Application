@@ -30,7 +30,7 @@ void BattleHandler::GetPlayerActions() {
     fill(partyDefending.begin(), partyDefending.end(), false);
 
     for (size_t i = 0; i < party.size(); i++) {
-        // Skip dead party members - do NOT ask for actions
+        // Skip downed party members completely - don't even ask them
         if (party[i].health <= 0) {
             party[i].health = 0;  // Clamp to 0 if negative
             continue;
@@ -63,7 +63,7 @@ void BattleHandler::GetPlayerActions() {
                     continue;
                 }
 
-                // If target died before this character acts, defend instead
+                // If target died before this character acts, auto-defend (silently add action)
                 if (enemies[targetIndex].health <= 0) {
                     enemies[targetIndex].health = 0;  // Clamp to 0
                     
@@ -76,11 +76,6 @@ void BattleHandler::GetPlayerActions() {
 
                     turnActions.push_back(action);
                     partyDefending[i] = true;
-
-                    system("cls");
-                    cout << party[i].name << " will defend this turn (target defeated)!\n";
-                    cout << "Press ENTER to continue...\n";
-                    cin.get();
 
                     actionSelected = true;
                     continue;
@@ -114,7 +109,7 @@ void BattleHandler::GetPlayerActions() {
                 partyDefending[i] = true;
 
                 system("cls");
-                cout << party[i].name << " will defend this turn!\n";
+                cout << party[i].name << " is defending this turn!\n";
                 cout << "Press ENTER to continue...\n";
                 cin.get();
 
@@ -150,7 +145,7 @@ void BattleHandler::GetEnemyActions() {
     fill(enemiesDefending.begin(), enemiesDefending.end(), false);
 
     for (size_t i = 0; i < enemies.size(); i++) {
-        // Skip dead enemies - do NOT ask for actions
+        // Skip downed enemies - don't even ask for actions
         if (enemies[i].health <= 0) {
             enemies[i].health = 0;  // Clamp to 0 if negative
             continue;
@@ -219,7 +214,26 @@ bool BattleHandler::IsValidTarget(int targetIndex) {
 }
 
 void BattleHandler::ExecuteAction(const BattleAction& action) {
-    if (action.actionType == 4) {  // Defend - no visual output needed here
+    if (action.actionType == 4) {  // Defend - show message and display updated bars
+        if (action.actorIndex < static_cast<int>(party.size())) {
+            // Party member defending
+            system("cls");
+            DisplayBattleField(party, enemies);
+            cout << party[action.actorIndex].name << " defends!\n";
+            cout << "\nPress ENTER to continue...\n";
+            cin.get();
+        }
+        else {
+            // Enemy defending
+            int enemyIndex = action.actorIndex - static_cast<int>(party.size());
+            if (enemyIndex >= 0 && enemyIndex < static_cast<int>(enemies.size())) {
+                system("cls");
+                DisplayBattleField(party, enemies);
+                cout << enemies[enemyIndex].name << " defends!\n";
+                cout << "\nPress ENTER to continue...\n";
+                cin.get();
+            }
+        }
         return;
     }
 
@@ -230,11 +244,7 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                 // Skip if enemy is dead
                 if (enemies[action.targetIndex].health <= 0) {
                     enemies[action.targetIndex].health = 0;  // Clamp to 0
-                    cout << party[action.actorIndex].name << " tries to attack, but " 
-                         << enemies[action.targetIndex].name << " is already defeated!\n";
-                    cout << "Press ENTER to continue...\n";
-                    cin.get();
-                    return;
+                    return;  // Silently skip - no message
                 }
 
                 int damage = party[action.actorIndex].strength - (enemies[action.targetIndex].defense / 2);
@@ -244,19 +254,12 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                 ApplyDamage(enemies[action.targetIndex].health, enemies[action.targetIndex].maxHealth, damage, isEnemyDefending);
 
                 system("cls");
-                cout << party[action.actorIndex].name << " attacks " << enemies[action.targetIndex].name;
-                
-                if (isEnemyDefending) {
-                    cout << " (who was defending)";
-                }
-                
-                cout << " for " << damage << " damage!\n";
-                cout << enemies[action.targetIndex].name << " HP: " << enemies[action.targetIndex].health << "/"
-                     << enemies[action.targetIndex].maxHealth << "\n";
+                DisplayBattleField(party, enemies);
+                cout << party[action.actorIndex].name << " does " << damage << " damage to " << enemies[action.targetIndex].name << "!\n";
                 
                 if (enemies[action.targetIndex].health <= 0) {
                     enemies[action.targetIndex].health = 0;  // Clamp to 0
-                    cout << enemies[action.targetIndex].name << " has been defeated!\n";
+                    cout << enemies[action.targetIndex].name << " is downed!\n";
                 }
                 
                 cout << "\nPress ENTER to continue...\n";
@@ -270,21 +273,14 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                 // Skip if attacker is dead
                 if (enemies[enemyIndex].health <= 0) {
                     enemies[enemyIndex].health = 0;  // Clamp to 0
-                    cout << enemies[enemyIndex].name << " tries to attack, but is already defeated!\n";
-                    cout << "Press ENTER to continue...\n";
-                    cin.get();
-                    return;
+                    return;  // Silently skip - no message
                 }
 
                 if (action.targetIndex >= 0 && action.targetIndex < static_cast<int>(party.size())) {
                     // Skip if target is dead
                     if (party[action.targetIndex].health <= 0) {
                         party[action.targetIndex].health = 0;  // Clamp to 0
-                        cout << enemies[enemyIndex].name << " tries to attack, but " 
-                             << party[action.targetIndex].name << " is already defeated!\n";
-                        cout << "Press ENTER to continue...\n";
-                        cin.get();
-                        return;
+                        return;  // Silently skip - no message
                     }
 
                     int damage = enemies[enemyIndex].attack - (party[action.targetIndex].defense / 2);
@@ -294,19 +290,12 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                     ApplyDamage(party[action.targetIndex].health, party[action.targetIndex].maxHealth, damage, isPartyDefending);
 
                     system("cls");
-                    cout << enemies[enemyIndex].name << " attacks " << party[action.targetIndex].name;
-                    
-                    if (isPartyDefending) {
-                        cout << " (who was defending)";
-                    }
-                    
-                    cout << " for " << damage << " damage!\n";
-                    cout << party[action.targetIndex].name << " HP: " << party[action.targetIndex].health << "/"
-                         << party[action.targetIndex].maxHealth << "\n";
+                    DisplayBattleField(party, enemies);
+                    cout << enemies[enemyIndex].name << " does " << damage << " damage to " << party[action.targetIndex].name << "!\n";
                     
                     if (party[action.targetIndex].health <= 0) {
                         party[action.targetIndex].health = 0;  // Clamp to 0
-                        cout << party[action.targetIndex].name << " has been defeated!\n";
+                        cout << party[action.targetIndex].name << " is downed!\n";
                     }
                     
                     cout << "\nPress ENTER to continue...\n";
@@ -352,6 +341,20 @@ void BattleHandler::ExecuteRound() {
     cin.get();
 
     // Execute all actions
+    for (const auto& action : turnActions) {
+        ExecuteAction(action);
+    }
+
+    // Clear actions for next turn
+    turnActions.clear();
+    
+    // Reset defending flags
+    fill(partyDefending.begin(), partyDefending.end(), false);
+    fill(enemiesDefending.begin(), enemiesDefending.end(), false);
+}
+
+void BattleHandler::ExecuteEnemyAttacks() {
+    // Execute all collected actions (should only be enemy actions)
     for (const auto& action : turnActions) {
         ExecuteAction(action);
     }
