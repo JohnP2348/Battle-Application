@@ -30,8 +30,11 @@ void BattleHandler::GetPlayerActions() {
     fill(partyDefending.begin(), partyDefending.end(), false);
 
     for (size_t i = 0; i < party.size(); i++) {
-        // Skip dead party members
-        if (party[i].health <= 0) continue;
+        // Skip dead party members - do NOT ask for actions
+        if (party[i].health <= 0) {
+            party[i].health = 0;  // Clamp to 0 if negative
+            continue;
+        }
 
         bool actionSelected = false;
 
@@ -52,8 +55,18 @@ void BattleHandler::GetPlayerActions() {
 
                 int targetIndex = DisplayEnemyTargetSelector(enemies, party, party[i].name);
                 
+                // Ensure target is valid and alive
+                if (targetIndex < 0 || targetIndex >= static_cast<int>(enemies.size())) {
+                    cout << "Invalid target!\n";
+                    cout << "Press ENTER to continue...\n";
+                    cin.get();
+                    continue;
+                }
+
                 // If target died before this character acts, defend instead
                 if (enemies[targetIndex].health <= 0) {
+                    enemies[targetIndex].health = 0;  // Clamp to 0
+                    
                     BattleAction action;
                     action.actorIndex = static_cast<int>(i);
                     action.actionType = 4;  // Defend
@@ -65,7 +78,7 @@ void BattleHandler::GetPlayerActions() {
                     partyDefending[i] = true;
 
                     system("cls");
-                    cout << party[i].name << " will defend this turn!\n";
+                    cout << party[i].name << " will defend this turn (target defeated)!\n";
                     cout << "Press ENTER to continue...\n";
                     cin.get();
 
@@ -137,26 +150,34 @@ void BattleHandler::GetEnemyActions() {
     fill(enemiesDefending.begin(), enemiesDefending.end(), false);
 
     for (size_t i = 0; i < enemies.size(); i++) {
-        if (enemies[i].health <= 0) continue;  // Skip dead enemies
+        // Skip dead enemies - do NOT ask for actions
+        if (enemies[i].health <= 0) {
+            enemies[i].health = 0;  // Clamp to 0 if negative
+            continue;
+        }
 
         // Simple AI: 80% chance to attack, 20% chance to defend
         uniform_int_distribution<> aiDist(0, 100);
         int aiRoll = aiDist(gen);
 
         if (aiRoll <= 80) {
-            // Attack
-            uniform_int_distribution<> targetDist(0, static_cast<int>(party.size()) - 1);
-            int target = targetDist(gen);
-
-            // Skip if target is dead
-            while (target < static_cast<int>(party.size()) && party[target].health <= 0) {
-                target = targetDist(gen);
+            // Attack - find alive party member
+            vector<int> aliveParty;
+            for (size_t j = 0; j < party.size(); j++) {
+                if (party[j].health > 0) {
+                    aliveParty.push_back(static_cast<int>(j));
+                }
             }
+
+            if (aliveParty.empty()) continue;  // No alive targets
+
+            uniform_int_distribution<> targetDist(0, static_cast<int>(aliveParty.size()) - 1);
+            int targetIndex = aliveParty[targetDist(gen)];
 
             BattleAction action;
             action.actorIndex = static_cast<int>(party.size()) + static_cast<int>(i);
             action.actionType = 0;  // Attack
-            action.targetIndex = target;
+            action.targetIndex = targetIndex;
             action.actionName = "Attack";
             action.isDefending = false;
 
@@ -183,7 +204,11 @@ void BattleHandler::ApplyDamage(int& targetHealth, int maxHealth, int damage, bo
     }
     damage = (damage < 1) ? 1 : damage;
     targetHealth -= damage;
-    targetHealth = max(0, targetHealth);
+    
+    // CLAMP to 0 - never allow negative HP
+    if (targetHealth < 0) {
+        targetHealth = 0;
+    }
 }
 
 bool BattleHandler::IsValidTarget(int targetIndex) {
@@ -204,6 +229,7 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
             if (action.targetIndex >= 0 && action.targetIndex < static_cast<int>(enemies.size())) {
                 // Skip if enemy is dead
                 if (enemies[action.targetIndex].health <= 0) {
+                    enemies[action.targetIndex].health = 0;  // Clamp to 0
                     cout << party[action.actorIndex].name << " tries to attack, but " 
                          << enemies[action.targetIndex].name << " is already defeated!\n";
                     cout << "Press ENTER to continue...\n";
@@ -229,6 +255,7 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                      << enemies[action.targetIndex].maxHealth << "\n";
                 
                 if (enemies[action.targetIndex].health <= 0) {
+                    enemies[action.targetIndex].health = 0;  // Clamp to 0
                     cout << enemies[action.targetIndex].name << " has been defeated!\n";
                 }
                 
@@ -242,6 +269,7 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
             if (enemyIndex >= 0 && enemyIndex < static_cast<int>(enemies.size())) {
                 // Skip if attacker is dead
                 if (enemies[enemyIndex].health <= 0) {
+                    enemies[enemyIndex].health = 0;  // Clamp to 0
                     cout << enemies[enemyIndex].name << " tries to attack, but is already defeated!\n";
                     cout << "Press ENTER to continue...\n";
                     cin.get();
@@ -251,6 +279,7 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                 if (action.targetIndex >= 0 && action.targetIndex < static_cast<int>(party.size())) {
                     // Skip if target is dead
                     if (party[action.targetIndex].health <= 0) {
+                        party[action.targetIndex].health = 0;  // Clamp to 0
                         cout << enemies[enemyIndex].name << " tries to attack, but " 
                              << party[action.targetIndex].name << " is already defeated!\n";
                         cout << "Press ENTER to continue...\n";
@@ -276,6 +305,7 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                          << party[action.targetIndex].maxHealth << "\n";
                     
                     if (party[action.targetIndex].health <= 0) {
+                        party[action.targetIndex].health = 0;  // Clamp to 0
                         cout << party[action.targetIndex].name << " has been defeated!\n";
                     }
                     
