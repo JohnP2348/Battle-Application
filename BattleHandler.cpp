@@ -4,6 +4,11 @@
 #include <random>
 #include <algorithm>
 
+// Undefine max macro from windows.h if it exists
+#ifdef max
+#undef max
+#endif
+
 using namespace std;
 
 BattleHandler::BattleHandler(std::vector<PartyMember>& playerParty, std::vector<RegularEnemy>& enemyParty)
@@ -24,7 +29,7 @@ std::vector<int> BattleHandler::GetAliveEnemyIndices() const {
 }
 
 void BattleHandler::GetPlayerActions() {
-    vector<string> commands = { "Attack", "Ability", "Magic", "Item", "Defend" };
+    vector<string> commands = { "Attack", "Ability", "Alchemy", "Item", "Defend" };
     
     // Reset defending flags for this turn
     fill(partyDefending.begin(), partyDefending.end(), false);
@@ -194,10 +199,17 @@ void BattleHandler::GetEnemyActions() {
 }
 
 void BattleHandler::ApplyDamage(int& targetHealth, int maxHealth, int damage, bool isDefending) {
+    // Apply defending modifier FIRST
     if (isDefending) {
         damage = damage / 2;  // Defending halves damage
     }
-    damage = (damage < 1) ? 1 : damage;
+    
+    // Ensure minimum damage of 1
+    if (damage < 1) {
+        damage = 1;
+    }
+    
+    // Apply damage to health
     targetHealth -= damage;
     
     // CLAMP to 0 - never allow negative HP
@@ -247,15 +259,34 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                     return;  // Silently skip - no message
                 }
 
-                int damage = party[action.actorIndex].strength - (enemies[action.targetIndex].defense / 2);
-                damage = (damage < 1) ? 1 : damage;
+                int baseDamage = party[action.actorIndex].strength - (enemies[action.targetIndex].defense / 2);
+                if (baseDamage < 1) {
+                    baseDamage = 1;
+                }
 
                 bool isEnemyDefending = enemiesDefending[action.targetIndex];
-                ApplyDamage(enemies[action.targetIndex].health, enemies[action.targetIndex].maxHealth, damage, isEnemyDefending);
+                int finalDamage = baseDamage;
+                
+                // Apply defending modifier to get final damage
+                if (isEnemyDefending) {
+                    finalDamage = baseDamage / 2;
+                    if (finalDamage < 1) {
+                        finalDamage = 1;
+                    }
+                }
+                
+                enemies[action.targetIndex].health -= finalDamage;
+                if (enemies[action.targetIndex].health < 0) {
+                    enemies[action.targetIndex].health = 0;
+                }
 
                 system("cls");
                 DisplayBattleField(party, enemies);
-                cout << party[action.actorIndex].name << " does " << damage << " damage to " << enemies[action.targetIndex].name << "!\n";
+                cout << party[action.actorIndex].name << " does " << finalDamage << " damage to " << enemies[action.targetIndex].name << "!\n";
+                
+                if (isEnemyDefending) {
+                    cout << "(Defending reduced damage!)\n";
+                }
                 
                 if (enemies[action.targetIndex].health <= 0) {
                     enemies[action.targetIndex].health = 0;  // Clamp to 0
@@ -283,15 +314,34 @@ void BattleHandler::ExecuteAction(const BattleAction& action) {
                         return;  // Silently skip - no message
                     }
 
-                    int damage = enemies[enemyIndex].attack - (party[action.targetIndex].defense / 2);
-                    damage = (damage < 1) ? 1 : damage;
+                    int baseDamage = enemies[enemyIndex].attack - (party[action.targetIndex].defense / 2);
+                    if (baseDamage < 1) {
+                        baseDamage = 1;
+                    }
 
                     bool isPartyDefending = partyDefending[action.targetIndex];
-                    ApplyDamage(party[action.targetIndex].health, party[action.targetIndex].maxHealth, damage, isPartyDefending);
+                    int finalDamage = baseDamage;
+                    
+                    // Apply defending modifier to get final damage
+                    if (isPartyDefending) {
+                        finalDamage = baseDamage / 2;
+                        if (finalDamage < 1) {
+                            finalDamage = 1;
+                        }
+                    }
+                    
+                    party[action.targetIndex].health -= finalDamage;
+                    if (party[action.targetIndex].health < 0) {
+                        party[action.targetIndex].health = 0;
+                    }
 
                     system("cls");
                     DisplayBattleField(party, enemies);
-                    cout << enemies[enemyIndex].name << " does " << damage << " damage to " << party[action.targetIndex].name << "!\n";
+                    cout << enemies[enemyIndex].name << " does " << finalDamage << " damage to " << party[action.targetIndex].name << "!\n";
+                    
+                    if (isPartyDefending) {
+                        cout << "(Defending reduced damage!)\n";
+                    }
                     
                     if (party[action.targetIndex].health <= 0) {
                         party[action.targetIndex].health = 0;  // Clamp to 0
@@ -353,20 +403,6 @@ void BattleHandler::ExecuteRound() {
     fill(enemiesDefending.begin(), enemiesDefending.end(), false);
 }
 
-void BattleHandler::ExecuteEnemyAttacks() {
-    // Execute all collected actions (should only be enemy actions)
-    for (const auto& action : turnActions) {
-        ExecuteAction(action);
-    }
-
-    // Clear actions for next turn
-    turnActions.clear();
-    
-    // Reset defending flags
-    fill(partyDefending.begin(), partyDefending.end(), false);
-    fill(enemiesDefending.begin(), enemiesDefending.end(), false);
-}
-
 bool BattleHandler::IsBattleOver() const {
     return HasPlayerWon() || HaveEnemiesWon();
 }
@@ -392,5 +428,19 @@ bool BattleHandler::HaveEnemiesWon() const {
 void BattleHandler::DisplayBattleState() const {
     system("cls");
     DisplayBattleField(party, enemies);
+}
+
+void BattleHandler::ExecuteEnemyAttacks() {
+    // Execute all collected actions (should only be enemy actions)
+    for (const auto& action : turnActions) {
+        ExecuteAction(action);
+    }
+
+    // Clear actions for next turn
+    turnActions.clear();
+    
+    // Reset defending flags
+    fill(partyDefending.begin(), partyDefending.end(), false);
+    fill(enemiesDefending.begin(), enemiesDefending.end(), false);
 }
 
